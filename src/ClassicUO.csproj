@@ -88,7 +88,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>libs\api\cuoapi.dll</HintPath>
     </Reference>
-    <Reference Include="FNA, Version=19.12.1.0, Culture=neutral, processorArchitecture=AMD64">
+    <Reference Include="FNA, Version=20.3.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>libs\FNA\FNA.dll</HintPath>
     </Reference>
@@ -131,6 +131,7 @@
     <Compile Include="Game\Data\PopupMenuItem.cs" />
     <Compile Include="Game\Data\PromptData.cs" />
     <Compile Include="Game\Data\RaceType.cs" />
+    <Compile Include="Game\Data\Waypoints.cs" />
     <Compile Include="Game\Managers\ActiveIconsManager.cs" />
     <Compile Include="Game\Managers\BoatMovingManager.cs" />
     <Compile Include="Game\Managers\DelayedObjectClickManager.cs" />
@@ -147,7 +148,7 @@
     <Compile Include="Game\GameObjects\DragEffect.cs" />
     <Compile Include="Game\GameObjects\Land.cs" />
     <Compile Include="Game\GameObjects\EntityTextContainer.cs" />
-    <Compile Include="Game\GameObjects\TextOverhead.cs" />
+    <Compile Include="Game\GameObjects\TextObject.cs" />
     <Compile Include="Game\ItemHold.cs" />
     <Compile Include="Game\LinkedObject.cs" />
     <Compile Include="Game\Managers\AnchorManager.cs" />
@@ -204,6 +205,10 @@
     <Compile Include="Game\UI\TextEntryRules.cs" />
     <Compile Include="Game\Weather.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Network\Encryption\BlowfishBehaviour.cs" />
+    <Compile Include="Network\Encryption\Encryption.cs" />
+    <Compile Include="Network\Encryption\LoginCryptBehaviour.cs" />
+    <Compile Include="Network\Encryption\TwofishBehaviour.cs" />
     <Compile Include="Renderer\MatrixEffect.cs" />
     <Compile Include="Time.cs" />
     <Compile Include="Utility\Collections\RawList.cs" />
@@ -231,7 +236,6 @@
     <Compile Include="Game\UI\Gumps\ProfileGump.cs" />
     <Compile Include="Game\UI\Gumps\QuestArrowGump.cs" />
     <Compile Include="Game\UI\Gumps\RacialAbilitiesBookGump.cs" />
-    <Compile Include="Game\UI\Gumps\TargetLineGump.cs" />
     <Compile Include="Game\UI\Gumps\TextEntryDialogGump.cs" />
     <Compile Include="Game\UI\Gumps\UseAbilityButtonGump.cs" />
     <Compile Include="Game\UI\MultiLineEntry.cs" />
@@ -348,7 +352,6 @@
     <Compile Include="Game\UI\Gumps\QuestionGump.cs" />
     <Compile Include="Game\UI\Gumps\HealthBarGump.cs" />
     <Compile Include="Game\UI\Gumps\OptionsGump.cs" />
-    <Compile Include="Game\UI\Gumps\PartyGumpAdvanced.cs" />
     <Compile Include="Game\UI\Gumps\PopupMenuGump.cs" />
     <Compile Include="Game\UI\Gumps\SkillButtonGump.cs" />
     <Compile Include="Game\UI\Gumps\SplitMenuGump.cs" />
@@ -403,13 +406,11 @@
     <Compile Include="Game\UI\Controls\Control.cs" />
     <Compile Include="Game\UI\Controls\GumpControlInfo.cs" />
     <Compile Include="Game\UI\Controls\GumpPic.cs" />
-    <Compile Include="Game\UI\Controls\GumpPicContainer.cs" />
     <Compile Include="Game\UI\Controls\GumpPicTiled.cs" />
     <Compile Include="Game\UI\Controls\HSliderBar.cs" />
     <Compile Include="Game\UI\Controls\HtmlControl.cs" />
     <Compile Include="Game\UI\Controls\ScrollBarBase.cs" />
     <Compile Include="Game\UI\Controls\ItemGump.cs" />
-    <Compile Include="Game\UI\Controls\ItemGumpPaperdoll.cs" />
     <Compile Include="Game\UI\Controls\Label.cs" />
     <Compile Include="Game\UI\Controls\Panel.cs" />
     <Compile Include="Game\UI\Controls\PaperDollInteractable.cs" />
@@ -437,7 +438,6 @@
     <Compile Include="Game\Managers\UIManager.cs" />
     <Compile Include="Game\Map\Map.cs" />
     <Compile Include="Game\Map\Chunk.cs" />
-    <Compile Include="Game\Map\Tile.cs" />
     <Compile Include="Game\Pathfinder.cs" />
     <Compile Include="Game\Scenes\GameScene.cs" />
     <Compile Include="Game\Scenes\LoginScene.cs" />
@@ -497,6 +497,10 @@
     <Compile Include="Utility\TextFileParser.cs" />
     <Compile Include="Utility\UnsafeMemoryManager.cs" />
     <Compile Include="Utility\ZLib.cs" />
+    <Compile Include="Utility\ZLib\Adler32.cs" />
+    <Compile Include="Utility\ZLib\ZLibManaged.cs" />
+    <Compile Include="Utility\ZLib\ZLibHeader.cs" />
+    <Compile Include="Utility\ZLib\ZLIBStream.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -508,10 +512,19 @@
     <None Include="libs\lib64\libFAudio.so.0">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="libs\lib64\libz.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="libs\osx\libFAudio.0.dylib">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
+    <EmbeddedResource Include="Renderer\fonts\map1_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map2_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map3_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map4_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map5_font.xnb" />
+    <EmbeddedResource Include="Renderer\fonts\map6_font.xnb" />
     <None Include="shaders\compile_shaders.bat" />
     <None Include="shaders\IsometricWorld.fx" />
     <EmbeddedResource Include="shaders\IsometricWorld.fxc" />
@@ -537,9 +550,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="libs\osx\libtheorafile.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ClassicUO-mono.sh">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <EmbeddedResource Include="shaders\xBR.fxc" />
@@ -578,9 +588,21 @@
     <Content Include="libs\x64\SDL2_image.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="libs\x64\vcruntime140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="libs\x64\zlib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
 </Project>

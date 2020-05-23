@@ -45,7 +45,11 @@ namespace ClassicUO.Game.UI.Controls
 
         public MultiLineEntry TxEntry { get; private set; }
 
-        public bool IsChanged => TxEntry.IsChanged;
+        public bool IsChanged
+        {
+            get => TxEntry.IsChanged;
+            set => TxEntry.IsChanged = value;
+        }
 
         public ushort Hue
         {
@@ -53,7 +57,7 @@ namespace ClassicUO.Game.UI.Controls
             set => TxEntry.Hue = value;
         }
 
-        public string Text
+        public override string Text
         {
             get => TxEntry.Text;
             set => SetText(value);
@@ -168,13 +172,6 @@ namespace ClassicUO.Game.UI.Controls
 
                         return;
                     }
-                }
-                else if (Keyboard.IsModPressed(mod, SDL.SDL_Keymod.KMOD_CTRL) && (key == SDL.SDL_Keycode.SDLK_x || key == SDL.SDL_Keycode.SDLK_c))
-                {
-                    if (!IsEditable)
-                        key = SDL.SDL_Keycode.SDLK_c;
-                    string txt = TxEntry.GetSelectionText(key == SDL.SDL_Keycode.SDLK_x);
-                    SDL.SDL_SetClipboardText(txt);
                 }
                 else
                 {

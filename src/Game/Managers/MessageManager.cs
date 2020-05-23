@@ -20,6 +20,7 @@
 #endregion
 
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -120,74 +121,50 @@ namespace ClassicUO.Game.Managers
                     if (parent == null)
                         break;
 
-                    TextOverhead msg = CreateMessage(text, hue, font, unicode, type);
+                    TextObject msg = CreateMessage(text, hue, font, unicode, type);
                     msg.Owner = parent;
 
                     if (parent is Item it && !it.OnGround)
                     {
-                        msg.X = Mouse.LastClickPosition.X;
-                        msg.Y = Mouse.LastClickPosition.Y;
+                        msg.X = DelayedObjectClickManager.X;
+                        msg.Y = DelayedObjectClickManager.Y;
+                        msg.IsTextGump = true;
+                        bool found = false;
 
-                        Gump gump = UIManager.GetGump<Gump>(it.Container);
+                        for (var gump = UIManager.Gumps.Last; gump != null; gump = gump.Previous)
+                        {
+                            var g = gump.Value;
 
-                        if (gump is PaperDollGump paperDoll)
-                        {
-                            msg.X -= paperDoll.ScreenCoordinateX;
-                            msg.Y -= paperDoll.ScreenCoordinateY;
-                            paperDoll.AddText(msg);
-                        }
-                        else if (gump is ContainerGump container)
-                        {
-                            msg.X -= container.ScreenCoordinateX;
-                            msg.Y -= container.ScreenCoordinateY;
-                            container.AddText(msg);
-                        }
-                        else
-                        {
-                            Entity ent = World.Get(it.RootContainer);
+                            if (!g.IsDisposed)
+                            {
+                                switch (g)
+                                {
+                                    case PaperDollGump paperDoll when g.LocalSerial == it.Container:
+                                        paperDoll.AddText(msg);
+                                        found = true;
+                                        break;
+                                    case ContainerGump container when g.LocalSerial == it.Container:
+                                        container.AddText(msg);
+                                        found = true;
+                                        break;
+                                    case TradingGump trade when g.LocalSerial == it.Container || trade.ID1 == it.Container || trade.ID2 == it.Container:
+                                        trade.AddText(msg);
+                                        found = true;
+                                        break;
+                                }
+                            }
 
-                            if (ent == null || ent.IsDestroyed)
+                            if (found)
                                 break;
-
-                            var trade = UIManager.GetGump<TradingGump>(ent);
-
-                            if (trade == null)
-                            {
-                                Item item = ent.Items.FirstOrDefault(s => s.Graphic == 0x1E5E);
-
-                                if (item == null)
-                                    break;
-
-                                trade = UIManager.Gumps.OfType<TradingGump>().FirstOrDefault(s => s.ID1 == item || s.ID2 == item);
-                            }
-
-                            if (trade != null)
-                            {
-                                msg.X -= trade.ScreenCoordinateX;
-                                msg.Y -= trade.ScreenCoordinateY;
-                                trade.AddText(msg);
-                            }
-                            else
-                                Log.Warn( "Missing label handler for this control: 'UNKNOWN'. Report it!!");
                         }
                     }
 
                     parent.AddMessage(msg);
 
                     break;
-
-                case MessageType.Emote:
-                    if (parent == null)
-                        break;
-
-                    msg = CreateMessage($"{text}", hue, font, unicode, type);
-
-                    parent.AddMessage(msg);
-
-                    break;
+      
 
                 case MessageType.Command:
-
                 case MessageType.Encoded:
                 case MessageType.System:
                 case MessageType.Party:
@@ -200,9 +177,7 @@ namespace ClassicUO.Game.Managers
                     if (parent == null)
                         break;
 
-                    msg = CreateMessage(text, hue, font, unicode, type);
-
-                    parent.AddMessage(msg);
+                    parent.AddMessage(type, text, font, hue, unicode);
 
                     break;
             }
@@ -216,7 +191,7 @@ namespace ClassicUO.Game.Managers
         }
 
 
-        private static TextOverhead CreateMessage(string msg, ushort hue, byte font, bool isunicode, MessageType type)
+        public static TextObject CreateMessage(string msg, ushort hue, byte font, bool isunicode, MessageType type)
         {
             if (ProfileManager.Current != null && ProfileManager.Current.OverrideAllFonts)
             {
@@ -233,14 +208,14 @@ namespace ClassicUO.Game.Managers
 
             RenderedText rtext = RenderedText.Create(msg, hue, font, isunicode, FontStyle.BlackBorder, TEXT_ALIGN_TYPE.TS_LEFT, width, 30, false, false, true);
 
-            return new TextOverhead
-            {
-                Alpha = 255,
-                RenderedText = rtext,
-                Time = CalculateTimeToLive(rtext),
-                Type = type,
-                Hue = hue,
-            };
+            TextObject text_obj = TextObject.Create();
+            text_obj.RenderedText = rtext;
+            text_obj.Alpha = 0xFF;
+            text_obj.Time = CalculateTimeToLive(rtext);
+            text_obj.Type = type;
+            text_obj.Hue = hue;
+
+            return text_obj;
         }
 
         private static long CalculateTimeToLive(RenderedText rtext)

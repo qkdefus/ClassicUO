@@ -33,7 +33,7 @@ namespace ClassicUO.Game.GameObjects
 
         public override bool Draw(UltimaBatcher2D batcher, int posX, int posY)
         {
-            if (IsDestroyed)
+            if (IsDestroyed || !AllowedToDraw)
                 return false;
 
             ResetHueVector();
@@ -80,7 +80,7 @@ namespace ClassicUO.Game.GameObjects
             //Select(posX, posY);
             Texture.Ticks = Time.Ticks;
 
-            ref readonly StaticTiles data = ref TileDataLoader.Instance.StaticData[_displayedGraphic];
+            ref StaticTiles data = ref TileDataLoader.Instance.StaticData[_displayedGraphic];
 
             if (data.IsLight && Source != null)
             {

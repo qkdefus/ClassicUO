@@ -160,8 +160,11 @@ namespace ClassicUO.Game.UI.Gumps
                 int w = Width >> 1;
                 int h = Height >> 1;
 
-                foreach (Mobile mob in World.Mobiles.Where(s => s != World.Player))
+                foreach (Mobile mob in World.Mobiles)
                 {
+                    if (mob == World.Player)
+                        continue;
+
                     int xx = mob.X - World.Player.X;
                     int yy = mob.Y - World.Player.Y;
 
@@ -194,7 +197,7 @@ namespace ClassicUO.Game.UI.Gumps
             return false;
         }
 
-        public void ForceUpdate()
+        protected override void UpdateContents()
         {
             CreateMap();
         }
@@ -279,12 +282,12 @@ namespace ClassicUO.Game.UI.Gumps
 
                             if (block != null)
                             {
-                                GameObject obj = block.Tiles[x, y].FirstNode;
+                                GameObject obj = block.Tiles[x, y];
 
-                                while (obj?.Right != null)
-                                    obj = obj.Right;
+                                while (obj?.TNext != null)
+                                    obj = obj.TNext;
 
-                                for (; obj != null; obj = obj.Left)
+                                for (; obj != null; obj = obj.TPrevious)
                                 {
                                     if (obj is Multi)
                                     {

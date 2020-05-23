@@ -47,6 +47,7 @@ namespace ClassicUO.Game.UI.Gumps
         protected string _name;
         protected bool _canChangeName;
         protected TextBox _textBox;
+        protected bool _outOfRange;
 
         protected BaseHealthBarGump(Entity entity) : this(0, 0)
         {
@@ -72,7 +73,7 @@ namespace ClassicUO.Game.UI.Gumps
         protected BaseHealthBarGump(uint local, uint server) : base(local, server)
         {
             CanMove = true;
-            AnchorGroupName = "healthbar";
+            AnchorType = ANCHOR_TYPE.HEALTHBAR;
         }
 
         public override int GroupMatrixWidth
@@ -91,8 +92,6 @@ namespace ClassicUO.Game.UI.Gumps
 
         protected abstract void BuildGump();
 
-        public abstract void Update();
-
 
         public override void Dispose()
         {
@@ -103,6 +102,8 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (SelectedObject.HealthbarObject == entity && entity != null)
                 SelectedObject.HealthbarObject = null;
+            _textBox?.Dispose();
+            _textBox = null;
             base.Dispose();
         }
 
@@ -150,6 +151,7 @@ namespace ClassicUO.Game.UI.Gumps
             else if (ProfileManager.Current.SaveHealthbars)
             {
                 _name = xml.GetAttribute("name");
+                _outOfRange = true;
                 BuildGump();
             }
             else 
@@ -209,8 +211,9 @@ namespace ClassicUO.Game.UI.Gumps
             }
             else if (_canChangeName)
             {
-                _textBox.IsEditable = false;
-                UIManager.SystemChat.SetFocus();
+                if (_textBox != null)
+                    _textBox.IsEditable = false;
+                UIManager.SystemChat?.SetFocus();
             }
 
             base.OnMouseDown(x, y, button);
@@ -234,7 +237,7 @@ namespace ClassicUO.Game.UI.Gumps
                 }
                 else
                 {
-                    StatusGumpBase.AddStatusGump(ScreenCoordinateX, ScreenCoordinateY);
+                    UIManager.Add(StatusGumpBase.AddStatusGump(ScreenCoordinateX, ScreenCoordinateY));
                     Dispose();
                 }
             }
@@ -249,7 +252,7 @@ namespace ClassicUO.Game.UI.Gumps
             if (entity == null || SerialHelper.IsItem(entity.Serial))
                 return;
 
-            if ((key == SDL.SDL_Keycode.SDLK_RETURN || key == SDL.SDL_Keycode.SDLK_KP_ENTER) && _textBox.IsEditable)
+            if ((key == SDL.SDL_Keycode.SDLK_RETURN || key == SDL.SDL_Keycode.SDLK_KP_ENTER) && _textBox != null && _textBox.IsEditable)
             {
                 GameActions.Rename(entity, _textBox.Text);
                 UIManager.SystemChat?.SetFocus();
@@ -326,7 +329,6 @@ namespace ClassicUO.Game.UI.Gumps
 
 
         private bool _oldWarMode, _normalHits, _poisoned, _yellowHits;
-        private bool _outOfRange;
 
         internal const int HPB_WIDTH = 120;
         internal const int HPB_HEIGHT_MULTILINE = 60;
@@ -366,7 +368,7 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
 
-        public override void Update()
+        protected override void UpdateContents()
         {
             Clear();
             Children.Clear();
@@ -530,7 +532,27 @@ namespace ClassicUO.Game.UI.Gumps
                     _bars[0].IsVisible = true;
                 }
 
+                if (TargetManager.LastTargetInfo.Serial != World.Player && !_outOfRange && mobile != null)
+                {
+                    if (mobile == TargetManager.LastTargetInfo.Serial)
+                    {
+                        _border[0].LineColor = HPB_COLOR_RED;
 
+                        if (_border.Length >= 3)
+                        {
+                            _border[1].LineColor = _border[2].LineColor = _border[3].LineColor = HPB_COLOR_RED;
+                        }
+                    }
+                    else if (mobile != TargetManager.LastTargetInfo.Serial)
+                    {
+                        _border[0].LineColor = HPB_COLOR_BLACK;
+
+                        if (_border.Length >= 3)
+                        {
+                            _border[1].LineColor = _border[2].LineColor = _border[3].LineColor = HPB_COLOR_BLACK;
+                        }
+                    }
+                }
 
                 if (mobile != null)
                 {
@@ -854,7 +876,6 @@ namespace ClassicUO.Game.UI.Gumps
         private int _oldHits, _oldStam, _oldMana;
 
         private bool _oldWarMode, _normalHits, _poisoned, _yellowHits;
-        private bool _outOfRange;
 
 
         public HealthBarGump(Entity entity) : this()
@@ -892,7 +913,7 @@ namespace ClassicUO.Game.UI.Gumps
             protected set { }
         }
 
-        public override void Update()
+        protected override void UpdateContents()
         {
             Clear();
             Children.Clear();

@@ -330,7 +330,7 @@ namespace ClassicUO.IO.Resources
                 if (realWidth > width)
                 {
                     string newstr = GetTextByWidthASCII(font, str, width, (flags & UOFONT_CROPPED) != 0, align, flags);
-                    if ((flags & UOFONT_CROPTEXTURE) != 0)
+                    if ((flags & UOFONT_CROPTEXTURE) != 0 && !string.IsNullOrEmpty(newstr))
                     {
                         int totalheight = 0;
                         while (totalheight < height)
@@ -765,7 +765,7 @@ namespace ClassicUO.IO.Resources
                 if (realWidth > width)
                 {
                     string newstr = GetTextByWidthUnicode(font, str, width, (flags & UOFONT_CROPPED) != 0, align, flags);
-                    if ((flags & UOFONT_CROPTEXTURE) != 0)
+                    if ((flags & UOFONT_CROPTEXTURE) != 0 && !string.IsNullOrEmpty(newstr))
                     {
                         int totalheight = 0;
                         while (totalheight < height)
@@ -2028,7 +2028,13 @@ namespace ClassicUO.IO.Resources
 
             for (; i < len; i++)
             {
-                if (str[i] == ' ' || str[i] == '>')
+                // special case for single <{TAG}/>
+                if (str[i] == '/')
+                {
+                    endTag = true;
+                    break;
+                }
+                else if (str[i] == ' ' || str[i] == '>')
                     break;
             }
 

@@ -231,8 +231,14 @@ namespace ClassicUO.Game.UI.Gumps
         {
             switch (e.Type)
             {
-                case MessageType.Regular when e.Parent == null || ! SerialHelper.IsValid(e.Parent.Serial):
+                case MessageType.Regular when e.Parent == null || !SerialHelper.IsValid(e.Parent.Serial):
                 case MessageType.System:
+                    if (!string.IsNullOrEmpty(e.Name) && e.Name.ToLowerInvariant() != "system")
+                        AddLine($"{e.Name}: {e.Text}", e.Font, e.Hue, e.IsUnicode);
+                    else
+                        AddLine(e.Text, e.Font, e.Hue, e.IsUnicode);
+
+                    break;
                 case MessageType.Label when e.Parent == null || !SerialHelper.IsValid(e.Parent.Serial):
                     AddLine(e.Text, e.Font, e.Hue, e.IsUnicode);
 
@@ -371,7 +377,7 @@ namespace ClassicUO.Game.UI.Gumps
                             Mode = ChatMode.ClientCommand;
                             break;
 
-                        case ',' when UOChatManager.ChatIsEnabled:
+                        case ',' when UOChatManager.ChatIsEnabled == CHAT_STATUS.ENABLED:
                             Mode = ChatMode.UOChat;
                             break;
 
@@ -557,11 +563,13 @@ namespace ClassicUO.Game.UI.Gumps
                                     MessageManager.HandleMessage(null, "You are not in a party.", "System", 0xFFFF, MessageType.Regular, 3);
                                 else
                                 {
-                                    for (int i = 0; i < World.Party.Members.Length; i++)
-                                    {
-                                        if (World.Party.Members[i] != null && World.Party.Members[i].Serial != 0)
-                                            GameActions.RequestPartyRemoveMember(World.Party.Members[i].Serial);
-                                    }
+                                    GameActions.RequestPartyQuit();
+
+                                    //for (int i = 0; i < World.Party.Members.Length; i++)
+                                    //{
+                                    //    if (World.Party.Members[i] != null && World.Party.Members[i].Serial != 0)
+                                    //        GameActions.RequestPartyRemoveMember(World.Party.Members[i].Serial);
+                                    //}
                                 }
 
                                 break;
@@ -635,7 +643,8 @@ namespace ClassicUO.Game.UI.Gumps
                         break;
 
                     case ChatMode.ClientCommand:
-                        CommandManager.Execute(text);
+                        string[] tt = text.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+                        CommandManager.Execute(tt[0], tt);
 
                         break;
 

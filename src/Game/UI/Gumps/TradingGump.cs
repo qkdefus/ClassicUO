@@ -20,7 +20,6 @@
 #endregion
 
 using System;
-using System.Linq;
 using ClassicUO.Data;
 using ClassicUO.Game.GameObjects;
 using ClassicUO.Game.Scenes;
@@ -148,19 +147,21 @@ namespace ClassicUO.Game.UI.Gumps
         }
 
 
-        public void UpdateContent()
+        protected override void UpdateContents()
         {
             Entity container = World.Get(ID1);
 
             if (container == null)
                 return;
 
-            foreach (ItemGump v in _myBox.Children.OfType<ItemGump>().Where(s => container.Items.Contains(s.LocalSerial)))
+            foreach (var v in _myBox.Children)
                 v.Dispose();
 
-            foreach (Item item in container.Items)
+            for (var i = container.Items; i != null; i = i.Next)
             {
-                ItemGump g = new ItemGump(item)
+                Item it = (Item) i;
+
+                ItemGump g = new ItemGump(it.Serial, it.DisplayedGraphic, it.Hue, it.X, it.Y)
                 {
                     HighlightOnMouseOver = true
                 };
@@ -187,18 +188,19 @@ namespace ClassicUO.Game.UI.Gumps
                 _myBox.Add(g);
             }
 
-
             container = World.Get(ID2);
 
             if (container == null)
                 return;
 
-            foreach (ItemGump v in _hisBox.Children.OfType<ItemGump>().Where(s => container.Items.Contains(s.LocalSerial)))
+            foreach (var v in _hisBox.Children)
                 v.Dispose();
 
-            foreach (Item item in container.Items)
+            for (var i = container.Items; i != null; i = i.Next)
             {
-                ItemGump g = new ItemGump(item)
+                Item it = (Item) i;
+
+                ItemGump g = new ItemGump(it.Serial, it.DisplayedGraphic, it.Hue, it.X, it.Y)
                 {
                     HighlightOnMouseOver = true
                 };
@@ -354,16 +356,32 @@ namespace ClassicUO.Game.UI.Gumps
                 Add(_myCoinsEntries[1]);
                 _myCoinsEntries[1].SetText("0");
 
+                uint my_gold_entry = 0, my_plat_entry = 0;
 
                 void OnTextChanged(object sender, EventArgs e)
                 {
                     TextBox entry = (TextBox) sender;
+                    bool send = false;
 
                     if (entry != null)
                     {
                         if (string.IsNullOrEmpty(entry.Text))
                         {
                             entry.SetText("0");
+
+                            if ((int) entry.Tag == 0)
+                            {
+                                if (my_gold_entry != 0)
+                                {
+                                    my_gold_entry = 0;
+                                    send = true;
+                                }
+                            }
+                            else if (my_plat_entry != 0)
+                            {
+                                my_plat_entry = 0;
+                                send = true;
+                            }
                         }
                         else if (uint.TryParse(entry.Text, out uint value))
                         {
@@ -372,20 +390,38 @@ namespace ClassicUO.Game.UI.Gumps
                                 if (value > Gold)
                                 {
                                     value = Gold;
+                                    send = true;
                                 }
+
+                                if (my_gold_entry != value)
+                                    send = true;
+
+                                my_gold_entry = value;
                             }
                             else // platinum
                             {
                                 if (value > Platinum)
                                 {
                                     value = Platinum;
+                                    send = true;
                                 }
+
+                                if (my_plat_entry != value)
+                                    send = true;
+
+                                my_plat_entry = value;
                             }
 
-                            entry.SetText(value.ToString());
+                            if (send)
+                            {
+                                entry.SetText(value.ToString());
+                            }
                         }
 
-                        NetClient.Socket.Send(new PTradeUpdateGold(ID1, uint.Parse(_myCoinsEntries[0].Text), uint.Parse(_myCoinsEntries[1].Text)));
+                        entry.IsChanged = false;
+
+                        if (send)
+                            NetClient.Socket.Send(new PTradeUpdateGold(ID1, my_gold_entry, my_plat_entry));
                     }
                 }
 
@@ -446,7 +482,7 @@ namespace ClassicUO.Game.UI.Gumps
 
             SetCheckboxes();
 
-            UpdateContent();
+            RequestUpdateContents();
 
             _myBox.MouseUp += (sender, e) =>
             {

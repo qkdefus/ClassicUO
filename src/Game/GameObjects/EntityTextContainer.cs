@@ -28,80 +28,37 @@ using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.GameObjects
 {
-    class TextContainer
+    class TextContainer : LinkedObject
     {
-        public TextOverhead Items;
-
         public int Size, MaxSize = 5;
 
-        public void Add(TextOverhead obj)
+        public void Add(TextObject obj)
         {
-            if (obj != null)
-            {
-                if (Items == null)
-                    Items = obj;
-                else
-                {
-                    var curr = Items;
-
-                    while (curr.ListRight != null)
-                    {
-                        curr = curr.ListRight;
-                    }
-
-                    curr.ListRight = obj;
-                    obj.ListLeft = curr;
-                }
-            }
+            PushToBack(obj);
 
             if (Size >= MaxSize)
             {
-                if (Items != null)
-                {
-                    var items = Items;
-
-                    Items = Items.ListRight;
-
-                    if (Items != null)
-                        Items.ListLeft = null;
-
-                    items.ListRight = null;
-                    items.ListLeft = null;
-                    items.RenderedText?.Destroy();
-
-                    if (items.Right != null)
-                        items.Right.Left = items.Left;
-
-                    if (items.Left != null)
-                        items.Left.Right = items.Right;
-                    items.Left = null;
-                    items.Right = null;
-                }
+                ((TextObject) Items)?.Destroy();
+                Remove(Items);
             }
             else
                 Size++;
         }
 
 
-        public void Clear()
+        public new void Clear()
         {
-            var item = Items;
+            var item = (TextObject) Items;
             Items = null;
 
             while (item != null)
             {
-                if (item.Right != null)
-                    item.Right.Left = item.Left;
+                var next = (TextObject) item.Next;
+                item.Next = null;
+                item.Destroy();
+                Remove(item);
 
-                if (item.Left != null)
-                    item.Left.Right = item.Right;
-
-                item.Left = item.Right = null;
-                
-                var next = item.ListRight;
-                item.ListRight = null;
-                item.RenderedText?.Destroy();
-                item = next;
+                item =  next;
             }
 
             Size = 0;
@@ -113,7 +70,7 @@ namespace ClassicUO.Game.GameObjects
     {
         private const int DAMAGE_Y_MOVING_TIME = 25;
 
-        private readonly Deque<TextOverhead> _messages;
+        private readonly Deque<TextObject> _messages;
 
         private Rectangle _rectangle;
 
@@ -121,7 +78,7 @@ namespace ClassicUO.Game.GameObjects
         public OverheadDamage(GameObject parent)
         {
             Parent = parent;
-            _messages = new Deque<TextOverhead>();
+            _messages = new Deque<TextObject>();
         }
 
 
@@ -136,12 +93,11 @@ namespace ClassicUO.Game.GameObjects
 
         public void Add(int damage)
         {
-            _messages.AddToFront(new TextOverhead
-            {
-                RenderedText = RenderedText.Create(damage.ToString(), (ushort) (Parent == World.Player ? 0x0034 : 0x0021), 3, false),
-                Time = Time.Ticks + 1500
-            });
+            TextObject text_obj = TextObject.Create();
+            text_obj.RenderedText = RenderedText.Create(damage.ToString(), (ushort) (Parent == World.Player ? 0x0034 : 0x0021), 3, false);
+            text_obj.Time = Time.Ticks + 1500;
 
+            _messages.AddToFront(text_obj);
 
             if (_messages.Count > 10)
                 _messages.RemoveFromBack()?.RenderedText?.Destroy();

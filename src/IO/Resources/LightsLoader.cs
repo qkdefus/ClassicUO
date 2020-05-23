@@ -31,7 +31,7 @@ namespace ClassicUO.IO.Resources
     {
         private UOFileMul _file;
 
-        private LightsLoader()
+        protected LightsLoader(int count) : base(count)
         {
 
         }
@@ -43,7 +43,7 @@ namespace ClassicUO.IO.Resources
             {
                 if (_instance == null)
                 {
-                    _instance = new LightsLoader();
+                    _instance = new LightsLoader(Constants.MAX_LIGHTS_DATA_INDEX_COUNT);
                 }
 
                 return _instance;
@@ -72,13 +72,19 @@ namespace ClassicUO.IO.Resources
 
         public override UOTexture16 GetTexture(uint id)
         {
-            if (!ResourceDictionary.TryGetValue(id, out var texture))
+            if (id >= Resources.Length)
+                return null;
+
+            ref var texture = ref Resources[id];
+
+            if (texture == null || texture.IsDisposed)
             {
                 ushort[] pixels = GetLight(id, out int w, out int h);
 
                 texture = new UOTexture16(w, h);
                 texture.PushData(pixels);
-                ResourceDictionary.Add(id, texture);
+
+                SaveID(id);
             }
 
             return texture;
@@ -89,8 +95,9 @@ namespace ClassicUO.IO.Resources
         {
             ref readonly var entry = ref GetValidRefEntry((int) idx);
 
-            width = entry.Extra & 0xFFFF;
-            height = (entry.Extra >> 16) & 0xFFFF;
+            width = entry.Width;
+            height = entry.Height;
+
             ushort[] pixels = new ushort[width * height];
 
             _file.Seek(entry.Offset);

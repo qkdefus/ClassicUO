@@ -176,10 +176,12 @@ namespace ClassicUO.Network
             }
 
             WriteUShort(character.Hue);
-            if (character.Equipment[(int)Layer.Hair] != null)
+            Item hair = character.FindItemByLayer(Layer.Hair);
+
+            if (hair != null)
             {
-                WriteUShort(character.Equipment[(int)Layer.Hair].Graphic);
-                WriteUShort(character.Equipment[(int)Layer.Hair].Hue);
+                WriteUShort(hair.Graphic);
+                WriteUShort(hair.Hue);
             }
             else
             {
@@ -187,10 +189,12 @@ namespace ClassicUO.Network
                 WriteUShort(0x00);
             }
 
-            if (character.Equipment[(int) Layer.Beard] != null)
+            Item beard = character.FindItemByLayer(Layer.Beard);
+
+            if (beard != null)
             {
-                WriteUShort(character.Equipment[(int) Layer.Beard].Graphic);
-                WriteUShort(character.Equipment[(int) Layer.Beard].Hue);
+                WriteUShort(beard.Graphic);
+                WriteUShort(beard.Hue);
             }
             else
             {
@@ -220,17 +224,21 @@ namespace ClassicUO.Network
 
             WriteUInt(clientIP);
 
-            if (character.Equipment[(int) Layer.Shirt] != null)
+            Item shirt = character.FindItemByLayer(Layer.Shirt);
+
+            if (shirt != null)
             {
-                WriteUShort(character.Equipment[(int) Layer.Shirt].Hue);
+                WriteUShort(shirt.Hue);
             }
             else
             {
                 WriteUShort(0);
             }
 
-            if (character.Equipment[(int) Layer.Pants] != null)
-                WriteUShort(character.Equipment[(int) Layer.Pants].Hue);
+            Item pants = character.FindItemByLayer(Layer.Pants);
+
+            if (pants != null)
+                WriteUShort(pants.Hue);
             else
                 WriteUShort(0x00);
         }
@@ -503,6 +511,7 @@ namespace ClassicUO.Network
         public POpenDoor() : base(0x12)
         {
             WriteByte(0x58);
+            WriteByte(0x00);
         }
     }
 
@@ -534,12 +543,14 @@ namespace ClassicUO.Network
 
             WriteUInt((uint) switches.Length);
 
-            for (int i = switches.Length - 1; i >= 0; i--)
+            //for (int i = switches.Length - 1; i >= 0; i--)
+            for (int i = 0; i < switches.Length; i++)
                 WriteUInt(switches[i]);
 
             WriteUInt((uint) entries.Length);
 
-            for (int i = entries.Length - 1; i >= 0; i--)
+            //for (int i = entries.Length - 1; i >= 0; i--)
+            for (int i = 0; i < entries.Length; i++)
             {
                 int length = Math.Min(239, entries[i].Item2.Length);
                 WriteUShort(entries[i].Item1);
@@ -1061,6 +1072,7 @@ namespace ClassicUO.Network
         public POpenChat(string name) : base(0xB5)
         {
             int len = name.Length;
+            WriteByte(0);
 
             if (len > 0)
             {
@@ -1135,11 +1147,14 @@ namespace ClassicUO.Network
     {
         public PMegaClilocRequest(ref List<uint> list) : base(0xD6)
         {
-            for (int i = 0; i < list.Count && i < 50; i++)
+            int count = Math.Min(15, list.Count);
+
+            for (int i = 0; i < count; i++)
             {
                 WriteUInt(list[i]);
-                list.RemoveAt(i--);
             }
+
+            list.RemoveRange(0, count);
         }
 
         public PMegaClilocRequest(uint serial) : base(0xD6)
@@ -1260,6 +1275,18 @@ namespace ClassicUO.Network
         public PDisarmRequest() : base(0xBF)
         {
             WriteUShort(0x0A);
+        }
+    }
+
+    internal sealed class PChangeRaceRequest : PacketWriter
+    {
+        public PChangeRaceRequest(ushort skin_hue, ushort hair_style, ushort hair_color, ushort beard_style, ushort beard_color) : base(0xBF)
+        {
+            WriteUShort(skin_hue);
+            WriteUShort(hair_style);
+            WriteUShort(hair_color);
+            WriteUShort(beard_style);
+            WriteUShort(beard_color);
         }
     }
 

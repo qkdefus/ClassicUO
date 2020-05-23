@@ -28,6 +28,7 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
 
 namespace ClassicUO.Game.GameObjects
 {
@@ -36,7 +37,7 @@ namespace ClassicUO.Game.GameObjects
         private static readonly Queue<Static> _pool = new Queue<Static>();
         static Static()
         {
-            for (int i = 0; i < 5000; i++)
+            for (int i = 0; i < Constants.PREDICTABLE_STATICS; i++)
                 _pool.Enqueue(new Static());
         }
 
@@ -86,6 +87,8 @@ namespace ClassicUO.Game.GameObjects
                 return s;
             }
 
+            Log.Debug(string.Intern("Created new Static"));
+
             return new Static(graphic, hue, index);
         }
 
@@ -95,7 +98,7 @@ namespace ClassicUO.Game.GameObjects
 
         public bool IsVegetation;
 
-        public ref readonly StaticTiles ItemData => ref TileDataLoader.Instance.StaticData[Graphic];
+        public ref StaticTiles ItemData => ref TileDataLoader.Instance.StaticData[Graphic];
 
         public void SetGraphic(ushort g)
         {
@@ -122,10 +125,10 @@ namespace ClassicUO.Game.GameObjects
             if (TextContainer == null)
                 return;
 
-            var last = TextContainer.Items;
+            var last = (TextObject) TextContainer.Items;
 
-            while (last?.ListRight != null)
-                last = last.ListRight;
+            while (last?.Next != null)
+                last = (TextObject) last.Next;
 
             if (last == null)
                 return;
@@ -148,7 +151,7 @@ namespace ClassicUO.Game.GameObjects
             x = (int)(x / scale);
             y = (int)(y / scale);
 
-            for (; last != null; last = last.ListLeft)
+            for (; last != null; last = (TextObject) last.Previous)
             {
                 if (last.RenderedText != null && !last.RenderedText.IsDestroyed)
                 {

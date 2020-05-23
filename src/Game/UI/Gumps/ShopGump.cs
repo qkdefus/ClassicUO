@@ -218,10 +218,18 @@ namespace ClassicUO.Game.UI.Gumps
 
 
 
-        public void SetIfNameIsFromCliloc(Item it, bool fromcliloc)
-        {
-            if (_shopItems.TryGetValue(it, out var shopItem)) shopItem.NameFromCliloc = fromcliloc;
-        }
+        //public void SetIfNameIsFromCliloc(Item it, bool fromcliloc)
+        //{
+        //    if (_shopItems.TryGetValue(it, out var shopItem))
+        //    {
+        //        shopItem.NameFromCliloc = fromcliloc;
+
+        //        if (fromcliloc)
+        //        {
+        //            shopItem.SetName(ClilocLoader.Instance.Translate(it.Name, $"\t{it.Amount}\t{it.ItemData.Name}", true));
+        //        }
+        //    }
+        //}
 
         public void AddItem(uint serial, ushort graphic, ushort hue, ushort amount, uint price, string name, bool fromcliloc)
         {
@@ -242,11 +250,15 @@ namespace ClassicUO.Game.UI.Gumps
             shopItem.MouseUp += ShopItem_MouseClick;
             shopItem.MouseDoubleClick += ShopItem_MouseDoubleClick;
             _shopItems.Add(serial, shopItem);
+           
+            //var it = World.Items.Get(serial);
+            //Console.WriteLine("ITEM: name: {0}  - tiledata name: {1}  - price: {2}   - X,Y= {3},{4}", name, TileDataLoader.Instance.StaticData[graphic].Name, price, it.X, it.Y);
         }
 
         public void SetNameTo(Item item, string name)
         {
-            if (!string.IsNullOrEmpty(name) && _shopItems.TryGetValue(item, out ShopItem shopItem)) shopItem.SetName(name);
+            if (!string.IsNullOrEmpty(name) && _shopItems.TryGetValue(item, out ShopItem shopItem)) 
+                shopItem.SetName(name, false);
         }
 
 
@@ -276,7 +288,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             if (_updateTotal)
             {
-                _totalLabel.Text = _transactionItems.Sum(o => o.Value.Amount * o.Value.Price).ToString();
+                int sum = 0;
+
+                foreach (var t in _transactionItems.Values)
+                {
+                    sum += t.Amount * t.Price;
+                }
+                _totalLabel.Text = sum.ToString();
                 _updateTotal = false;
             }
 
@@ -353,7 +371,8 @@ namespace ClassicUO.Game.UI.Gumps
 
         private void ShopItem_MouseClick(object sender, MouseEventArgs e)
         {
-            foreach (var shopItem in _shopScrollArea.Children.SelectMany(o => o.Children).OfType<ShopItem>()) shopItem.IsSelected = shopItem == sender;
+            foreach (var shopItem in _shopScrollArea.Children.SelectMany(o => o.Children).OfType<ShopItem>()) 
+                shopItem.IsSelected = shopItem == sender;
         }
 
         public override void OnButtonClick(int buttonID)
@@ -559,9 +578,9 @@ namespace ClassicUO.Game.UI.Gumps
 
             public bool NameFromCliloc { get; set; }
 
-            public void SetName(string s)
+            public void SetName(string s, bool new_name)
             {
-                _name.Text = $"{s} at {Price}gp";
+                _name.Text = new_name ? $"{s}: {Price}" : $"{s} at {Price}gp";
                 WantUpdateSize = true;
             }
 

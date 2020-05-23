@@ -108,6 +108,29 @@ namespace ClassicUO.IO.Resources
             return text;
         }
 
+        public string GetString(int number, string replace)
+        {
+            string s = GetString(number);
+
+            if (string.IsNullOrEmpty(s))
+                s = replace;
+
+            return s;
+        }
+
+        public string GetString(int number, bool camelcase, string replace = "")
+        {
+            string s = GetString(number);
+
+            if (string.IsNullOrEmpty(s) && !string.IsNullOrEmpty(replace))
+                s = replace;
+
+            if (camelcase && !string.IsNullOrEmpty(s))
+                s = StringHelper.CapitalizeAllWords(s);
+
+            return s;
+        }
+
         public string Translate(int baseCliloc, string arg = "", bool capitalize = false)
         {
             return Translate(GetString(baseCliloc), arg, capitalize);
@@ -124,22 +147,37 @@ namespace ClassicUO.IO.Resources
 
             List<string> arguments = new List<string>();
 
-            while (true)
+
+            for (int i = 0; i < arg.Length; i++)
             {
-                int pos = arg.IndexOf('\t');
-
-                if (pos != -1)
+                if (arg[i] == '\t')
                 {
-                    arguments.Add(arg.Substring(0, pos));
-                    arg = arg.Substring(pos + 1);
-                }
-                else
-                {
-                    arguments.Add(arg);
-
-                    break;
+                    arguments.Add(arg.Substring(0, i));
+                    arg = arg.Substring(i + 1);
+                    i = 0;
                 }
             }
+
+            bool has_arguments = arguments.Count != 0;
+
+            arguments.Add(arg);
+
+            //while (true)
+            //{
+            //    int pos = arg.IndexOf('\t');
+
+            //    if (pos != -1)
+            //    {
+            //        arguments.Add(arg.Substring(0, pos));
+            //        arg = arg.Substring(pos + 1);
+            //    }
+            //    else
+            //    {
+            //        arguments.Add(arg);
+
+            //        break;
+            //    }
+            //}
 
             int index = 0;
             while (true)
@@ -156,12 +194,20 @@ namespace ClassicUO.IO.Resources
 
                 string a = index >= arguments.Count ? string.Empty : arguments[index];
 
-                if (a.Length > 1 && a[0] == '#')
+                if (a.Length > 1)
                 {
-                    if (int.TryParse(a.Substring(1), out int id1))
-                        arguments[index] = GetString(id1) ?? string.Empty;
-                    else
-                        arguments[index] = a;
+                    if (a[0] == '#')
+                    {
+                        if (int.TryParse(a.Substring(1), out int id1))
+                            arguments[index] = GetString(id1) ?? string.Empty;
+                        else
+                            arguments[index] = a;
+                    }
+                    else if (has_arguments && int.TryParse(a, out int clil))
+                    {
+                        if (_entries.TryGetValue(clil, out string value) && !string.IsNullOrEmpty(value))
+                            arguments[index] = value;
+                    }
                 }
 
                 baseCliloc = baseCliloc.Remove(pos, pos2 - pos + 1).Insert(pos, index >= arguments.Count ? string.Empty : arguments[index]);

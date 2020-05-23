@@ -28,6 +28,8 @@ using ClassicUO.Game.Scenes;
 using ClassicUO.IO.Resources;
 using ClassicUO.Renderer;
 using ClassicUO.Utility;
+using ClassicUO.Utility.Logging;
+
 using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.GameObjects
@@ -42,7 +44,7 @@ namespace ClassicUO.Game.GameObjects
 
         static Multi()
         {
-            for (int i = 0; i < 5000; i++)
+            for (int i = 0; i < Constants.PREDICTABLE_MULTIS; i++)
                 _pool.Enqueue(new Multi());
         }
 
@@ -80,6 +82,7 @@ namespace ClassicUO.Game.GameObjects
                 m.AlphaHue = 0;
                 m.FoliageIndex = 0;
                 m.IsFromTarget = false;
+                m.IsMovable = false;
 
                 if (m.ItemData.Height > 5)
                     m._canBeTransparent = 1;
@@ -98,6 +101,8 @@ namespace ClassicUO.Game.GameObjects
                 return m;
             }
 
+            Log.Debug(string.Intern("Created new Multi"));
+
             return new Multi(graphic);
         }
 
@@ -109,8 +114,9 @@ namespace ClassicUO.Game.GameObjects
         public CUSTOM_HOUSE_MULTI_OBJECT_FLAGS State = 0;
         public bool IsCustom;
         public bool IsVegetation;
+        public bool IsMovable;
 
-        public ref readonly StaticTiles ItemData => ref TileDataLoader.Instance.StaticData[Graphic];
+        public ref StaticTiles ItemData => ref TileDataLoader.Instance.StaticData[Graphic];
 
         public override void UpdateGraphicBySeason()
         {
@@ -123,10 +129,10 @@ namespace ClassicUO.Game.GameObjects
             if (TextContainer == null)
                 return;
 
-            var last = TextContainer.Items;
+            var last = (TextObject) TextContainer.Items;
 
-            while (last?.ListRight != null)
-                last = last.ListRight;
+            while (last?.Next != null)
+                last = (TextObject) last.Next;
 
             if (last == null)
                 return;
@@ -152,7 +158,7 @@ namespace ClassicUO.Game.GameObjects
             x += (int) Offset.X;
             y += (int) (Offset.Y - Offset.Z);
 
-            for (; last != null; last = last.ListLeft)
+            for (; last != null; last = (TextObject) last.Previous)
             {
                 if (last.RenderedText != null && !last.RenderedText.IsDestroyed)
                 {
