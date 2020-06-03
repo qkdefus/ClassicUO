@@ -47,6 +47,33 @@ namespace ClassicUO.Configuration
             CharacterName = charactername;
         }
 
+        public static Profile DefaultProfile( string username, string servername, string charactername )
+        {
+            string defaultProfilePath = Path.Combine( CUOEnviroment.ExecutablePath, "default_profile.json" );
+
+            if (!File.Exists( defaultProfilePath ))
+            {
+                return new Profile( username, servername, charactername );
+            }
+
+            Profile defaultProfile = ConfigurationResolver.Load<Profile>( defaultProfilePath,
+                new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    MetadataPropertyHandling = MetadataPropertyHandling.ReadAhead
+                } );
+
+            if (defaultProfile == null)
+            {
+                return new Profile( username, servername, charactername );
+            }
+
+            defaultProfile.Username = username;
+            defaultProfile.ServerName = servername;
+            defaultProfile.CharacterName = charactername;
+            return defaultProfile;
+        }
+
         [JsonIgnore] public string Username { get; set; }
         [JsonIgnore] public string ServerName { get; set;  }
         [JsonIgnore] public string CharacterName { get; set;  }

@@ -40,7 +40,7 @@ namespace ClassicUO.Configuration
             string fileToLoad = Path.Combine(path, "profile.json");
 
             if (!File.Exists(fileToLoad))
-                Current = new Profile(username, servername, charactername);
+                Current = Profile.DefaultProfile( username, servername, charactername );
             else
             {
                 Current = ConfigurationResolver.Load<Profile>(fileToLoad,
@@ -51,7 +51,7 @@ namespace ClassicUO.Configuration
                                                               });
                 if (Current == null)
                 {
-                    Current = new Profile(username, servername, charactername);
+                    Current = Profile.DefaultProfile( username, servername, charactername );
                 }
                 else
                 {
