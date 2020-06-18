@@ -281,14 +281,6 @@ namespace ClassicUO.Game.Scenes
         {
             ItemHold.Clear();
 
-            try
-            {
-                Plugin.OnDisconnected();
-            }
-            catch
-            {
-            }
-
             TargetManager.ClearTargetingWithoutTargetCancelPacket();
 
             // special case for wmap. this allow us to save settings
@@ -334,6 +326,8 @@ namespace ClassicUO.Game.Scenes
                 _forceStopScene = true;
             else
             {
+                Plugin.OnDisconnected();
+
                 UIManager.Add(new MessageBoxGump(200, 200, $"Connection lost:\n{StringHelper.AddSpaceBeforeCapital(e.ToString())}", s =>
                 {
                     if (s)
