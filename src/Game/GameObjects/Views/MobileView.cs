@@ -92,7 +92,7 @@ namespace ClassicUO.Game.GameObjects
 
             if (ProfileManager.CurrentProfile.HighlightGameObjects && SelectedObject.LastObject == this)
             {
-                _viewHue = Constants.HIGHLIGHT_CURRENT_OBJECT_HUE;
+                _viewHue = Notoriety.GetHue( NotorietyFlag );
                 HueVector.Y = 1;
             }
             else if (SelectedObject.HealthbarObject == this)
